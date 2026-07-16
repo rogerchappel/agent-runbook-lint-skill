@@ -1,0 +1,12 @@
+{
+  "name": "agent-runbook-lint-skill",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first lint checks for agent automation runbooks.",
+  "scripts": {
+    "test": "python3 -m pytest",
+    "check": "python3 -m compileall src tests",
+    "smoke": "python3 -m agent_runbook_lint check fixtures/good-runbook.md --report /tmp/agent-runbook-lint-report.md"
+  }
+}
+
