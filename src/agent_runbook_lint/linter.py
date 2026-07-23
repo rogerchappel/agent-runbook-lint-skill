@@ -19,6 +19,10 @@ REQUIRED_TOPICS = {
 RISKY_ACTIONS = ("push", "publish", "deploy", "send", "delete", "merge", "tag release")
 ATX_HEADING = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$")
 FENCE_START = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})(.*)$")
+GATE_LANGUAGE = re.compile(
+    r"\b(?:ask|obtain|request|require(?:d|s)?|receive|secure|confirm)\b"
+    r"|\b(?:before|until|unless|without|prior[ \t]+to)\b"
+)
 
 
 @dataclass(frozen=True)
@@ -69,7 +73,6 @@ class RunbookReport:
 
 def lint_runbook(path: Path) -> RunbookReport:
     text = path.read_text(encoding="utf-8")
-    lowered = text.lower()
     sections = _parse_sections(text)
     results: list[LintResult] = []
     for topic, needles in REQUIRED_TOPICS.items():
@@ -79,7 +82,7 @@ def lint_runbook(path: Path) -> RunbookReport:
         )
         detail = "non-empty Markdown section found" if found else "missing non-empty Markdown section"
         results.append(LintResult(f"required topic: {topic}", found, detail))
-    results.append(_check_risky_approval(lowered))
+    results.append(_check_risky_approval(text, sections))
     results.append(_check_command_blocks(text))
     results.append(_check_numbered_steps(text))
     return RunbookReport(path=path, results=tuple(results))
@@ -123,11 +126,40 @@ def _heading_matches(heading: str, needles: tuple[str, ...]) -> bool:
     return any(re.search(rf"\b{re.escape(needle)}s?\b", normalized) for needle in needles)
 
 
-def _check_risky_approval(lowered: str) -> LintResult:
-    risky = [word for word in RISKY_ACTIONS if re.search(rf"\b{re.escape(word)}\b", lowered)]
-    has_approval = "approval" in lowered or "permission" in lowered or "confirm" in lowered
-    passed = not risky or has_approval
-    detail = "approval gate present" if passed and risky else "no risky actions found" if passed else f"risky actions need approval gate: {', '.join(risky)}"
+def _check_risky_approval(
+    text: str, sections: tuple[MarkdownSection, ...]
+) -> LintResult:
+    lowered = text.lower()
+    risky = [
+        action
+        for action in RISKY_ACTIONS
+        if re.search(rf"\b{re.escape(action)}\b", lowered)
+    ]
+    if not risky:
+        return LintResult("risky actions have approval gate", True, "no risky actions found")
+
+    approval_lines = [
+        line.lower()
+        for section in sections
+        if _heading_matches(section.heading, REQUIRED_TOPICS["approval"])
+        for line in section.body.splitlines()
+        if line.strip()
+    ]
+    gated = {
+        action
+        for action in risky
+        if any(
+            re.search(rf"\b{re.escape(action)}\b", line) and GATE_LANGUAGE.search(line)
+            for line in approval_lines
+        )
+    }
+    missing = [action for action in risky if action not in gated]
+    passed = not missing
+    detail = (
+        f"explicit approval gate covers: {', '.join(risky)}"
+        if passed
+        else f"risky actions need approval gate: {', '.join(missing)}"
+    )
     return LintResult("risky actions have approval gate", passed, detail)
 
 

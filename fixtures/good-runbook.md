@@ -33,9 +33,8 @@ Record command output and report path.
 
 ## Approval
 
-Ask before push, publish, deploy, merge, or send actions.
+Ask before push, publish, deploy, merge, send, or delete actions.
 
 ## Stop Conditions
 
 Stop if credentials, private data, or destructive commands are required.
-
