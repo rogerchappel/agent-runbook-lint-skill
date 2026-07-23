@@ -17,6 +17,8 @@ REQUIRED_TOPICS = {
 }
 
 RISKY_ACTIONS = ("push", "publish", "deploy", "send", "delete", "merge", "tag release")
+ATX_HEADING = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$")
+FENCE_START = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})(.*)$")
 
 
 @dataclass(frozen=True)
@@ -24,6 +26,12 @@ class LintResult:
     name: str
     passed: bool
     detail: str
+
+
+@dataclass(frozen=True)
+class MarkdownSection:
+    heading: str
+    body: str
 
 
 @dataclass(frozen=True)
@@ -62,14 +70,57 @@ class RunbookReport:
 def lint_runbook(path: Path) -> RunbookReport:
     text = path.read_text(encoding="utf-8")
     lowered = text.lower()
+    sections = _parse_sections(text)
     results: list[LintResult] = []
     for topic, needles in REQUIRED_TOPICS.items():
-        found = any(needle in lowered for needle in needles)
-        results.append(LintResult(f"required topic: {topic}", found, "covered" if found else "missing"))
+        found = any(
+            section.body.strip() and _heading_matches(section.heading, needles)
+            for section in sections
+        )
+        detail = "non-empty Markdown section found" if found else "missing non-empty Markdown section"
+        results.append(LintResult(f"required topic: {topic}", found, detail))
     results.append(_check_risky_approval(lowered))
     results.append(_check_command_blocks(text))
     results.append(_check_numbered_steps(text))
     return RunbookReport(path=path, results=tuple(results))
+
+
+def _parse_sections(text: str) -> tuple[MarkdownSection, ...]:
+    sections: list[MarkdownSection] = []
+    heading: str | None = None
+    body: list[str] = []
+    fence: tuple[str, int] | None = None
+
+    for line in text.splitlines():
+        fence_match = FENCE_START.match(line)
+        if fence_match:
+            marker = fence_match.group(1)
+            marker_type = marker[0]
+            if fence is None:
+                fence = (marker_type, len(marker))
+            elif marker_type == fence[0] and len(marker) >= fence[1]:
+                fence = None
+            if heading is not None:
+                body.append(line)
+            continue
+
+        heading_match = ATX_HEADING.match(line) if fence is None else None
+        if heading_match:
+            if heading is not None:
+                sections.append(MarkdownSection(heading=heading, body="\n".join(body)))
+            heading = heading_match.group(2).strip()
+            body = []
+        elif heading is not None:
+            body.append(line)
+
+    if heading is not None:
+        sections.append(MarkdownSection(heading=heading, body="\n".join(body)))
+    return tuple(sections)
+
+
+def _heading_matches(heading: str, needles: tuple[str, ...]) -> bool:
+    normalized = re.sub(r"[*_`~]", "", heading).lower()
+    return any(re.search(rf"\b{re.escape(needle)}s?\b", normalized) for needle in needles)
 
 
 def _check_risky_approval(lowered: str) -> LintResult:
@@ -89,4 +140,3 @@ def _check_command_blocks(text: str) -> LintResult:
 def _check_numbered_steps(text: str) -> LintResult:
     steps = len(re.findall(r"(?m)^\d+\.\s+", text))
     return LintResult("numbered procedure steps", steps >= 2, f"found {steps} numbered steps")
-
