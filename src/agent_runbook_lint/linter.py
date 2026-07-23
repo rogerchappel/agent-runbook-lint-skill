@@ -23,6 +23,13 @@ GATE_LANGUAGE = re.compile(
     r"\b(?:ask|obtain|request|require(?:d|s)?|receive|secure|confirm)\b"
     r"|\b(?:before|until|unless|without|prior[ \t]+to)\b"
 )
+COMMAND_LINE = re.compile(
+    r"^(?:\$\s*)?"
+    r"(?:npm|npx|pnpm|yarn|python(?:3)?|pip(?:3)?|git|gh|curl|wget|make|cmake|"
+    r"docker|kubectl|terraform|cargo|go|java|mvn|gradle|bash|sh|"
+    r"\./[\w./-]+|agent-runbook-lint)"
+    r"(?:\s|$)"
+)
 
 
 @dataclass(frozen=True)
@@ -164,9 +171,57 @@ def _check_risky_approval(
 
 
 def _check_command_blocks(text: str) -> LintResult:
-    fences = len(re.findall(r"```", text))
-    passed = fences >= 2
-    return LintResult("commands are fenced", passed, f"found {fences} fence markers")
+    blocks: list[list[str]] = []
+    current: list[str] | None = None
+    fence: tuple[str, int] | None = None
+    balanced = True
+    outside_commands: list[int] = []
+
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        marker_match = FENCE_START.match(line)
+        if fence is None and marker_match:
+            marker = marker_match.group(1)
+            fence = (marker[0], len(marker))
+            current = []
+            continue
+        if fence is not None:
+            closing = re.fullmatch(
+                rf"[ \t]{{0,3}}{re.escape(fence[0])}{{{fence[1]},}}[ \t]*",
+                line,
+            )
+            if closing:
+                blocks.append(current or [])
+                current = None
+                fence = None
+            else:
+                assert current is not None
+                current.append(line)
+            continue
+        if _is_command_like(line):
+            outside_commands.append(line_number)
+
+    if fence is not None:
+        balanced = False
+
+    inside_commands = sum(
+        1 for block in blocks for line in block if _is_command_like(line)
+    )
+    passed = balanced and inside_commands > 0 and not outside_commands
+    details = [
+        f"found {inside_commands} fenced command{'s' if inside_commands != 1 else ''}",
+        "fences balanced" if balanced else "unbalanced fence",
+    ]
+    if outside_commands:
+        details.append(
+            "command-like content outside fences on "
+            + ", ".join(f"line {line_number}" for line_number in outside_commands)
+        )
+    return LintResult("commands are fenced", passed, "; ".join(details))
+
+
+def _is_command_like(line: str) -> bool:
+    stripped = re.sub(r"^(?:[-*+]|\d+\.)[ \t]+", "", line.strip())
+    return bool(COMMAND_LINE.match(stripped))
 
 
 def _check_numbered_steps(text: str) -> LintResult:

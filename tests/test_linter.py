@@ -72,3 +72,52 @@ def test_approval_gate_must_cover_each_risky_action(tmp_path):
 
     assert not result.passed
     assert "delete" in result.detail
+
+
+def test_empty_fence_does_not_count_as_fenced_command():
+    report = lint_runbook(Path("fixtures/incidental-words-runbook.md"))
+    result = next(result for result in report.results if result.name == "commands are fenced")
+
+    assert not result.passed
+    assert "found 0 fenced commands" in result.detail
+
+
+def test_unbalanced_command_fence_fails(tmp_path):
+    runbook = tmp_path / "unbalanced.md"
+    runbook.write_text("## Steps\n\n```bash\nnpm test\n", encoding="utf-8")
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "commands are fenced"
+    )
+
+    assert not result.passed
+    assert "unbalanced fence" in result.detail
+
+
+def test_command_like_content_outside_fence_fails(tmp_path):
+    runbook = tmp_path / "outside.md"
+    runbook.write_text("## Steps\n\n1. npm test\n2. Record output.\n", encoding="utf-8")
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "commands are fenced"
+    )
+
+    assert not result.passed
+    assert "outside fences on line 3" in result.detail
+
+
+def test_tilde_fence_with_command_passes_command_check(tmp_path):
+    runbook = tmp_path / "tilde.md"
+    runbook.write_text("## Steps\n\n~~~shell\npython -m pytest\n~~~\n", encoding="utf-8")
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "commands are fenced"
+    )
+
+    assert result.passed
