@@ -15,6 +15,9 @@ Smoke test:
 npm run smoke
 ```
 
+See [Built-In Rules](docs/RULES.md) for the exact deterministic matching
+semantics.
+
 ## Use Cases
 
 - Review release-candidate runbooks before a scheduled automation lane runs them.
@@ -28,4 +31,3 @@ The checker is local-first and read-only for source runbooks. It does not execut
 ## Limitations
 
 The linter validates runbook structure and risky wording. It cannot prove that the documented workflow is operationally complete.
-

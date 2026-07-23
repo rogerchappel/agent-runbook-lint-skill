@@ -2,8 +2,53 @@
 
 The first release ships with deterministic Markdown checks:
 
-- Required topics: goal, inputs, steps, verification, rollback, evidence, approval, and stop conditions.
-- Risky actions: push, publish, deploy, send, delete, merge, and tag release require an approval gate.
-- Command examples should be fenced.
-- Procedures should include numbered steps.
+## Required topic sections
 
+Goal, inputs, steps, verification, rollback, evidence, approval, and stop
+conditions must each be represented by a non-empty ATX-style Markdown section
+(`#` through `######`). Incidental words in prose do not count. A heading
+matches when it contains one of these whole-word terms (with an optional plural
+`s`):
+
+- Goal: `goal`, `mission`, `objective`
+- Inputs: `input`, `prerequisite`, `source`
+- Steps: `steps`, `procedure`, `workflow`
+- Verification: `verification`, `validate`, `check`, `test`
+- Rollback: `rollback`, `revert`, `backout`
+- Evidence: `evidence`, `artifact`, `report`, `log`
+- Approval: `approval`, `permission`, `confirm`
+- Stop conditions: `stop`, `blocked`, `abort`, `do not continue`
+
+Headings inside fenced code blocks are ignored.
+
+## Risky-action approval gates
+
+The risky-action terms are `push`, `publish`, `deploy`, `send`, `delete`,
+`merge`, and `tag release`. If any appears in the document, every distinct
+action found must also appear on a gating line inside an approval, permission,
+or confirmation section. A gating line contains the action and at least one of:
+
+- `ask`, `obtain`, `request`, `require`, `required`, `requires`, `receive`,
+  `secure`, or `confirm`
+- `before`, `until`, `unless`, `without`, or `prior to`
+
+Approval language elsewhere in the document does not satisfy this rule.
+
+## Fenced commands
+
+The document must contain at least one command-like line inside a balanced
+backtick or tilde fence. Every command-like line must be fenced. Markdown list
+markers and shell prompts are ignored before matching. A line is command-like
+when its first executable is one of:
+
+`npm`, `npx`, `pnpm`, `yarn`, `python`, `python3`, `pip`, `pip3`, `git`, `gh`,
+`curl`, `wget`, `make`, `cmake`, `docker`, `kubectl`, `terraform`, `cargo`,
+`go`, `java`, `mvn`, `gradle`, `bash`, `sh`, `agent-runbook-lint`, or a
+relative `./...` executable.
+
+Empty fences, unbalanced fences, and recognized command lines outside fences
+fail this rule.
+
+## Numbered procedure
+
+At least two lines must begin with a `1.`-style numbered-list marker.
