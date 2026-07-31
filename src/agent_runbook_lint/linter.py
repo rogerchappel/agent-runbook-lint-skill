@@ -225,5 +225,24 @@ def _is_command_like(line: str) -> bool:
 
 
 def _check_numbered_steps(text: str) -> LintResult:
-    steps = len(re.findall(r"(?m)^\d+\.\s+", text))
+    steps = 0
+    fence: tuple[str, int] | None = None
+
+    for line in text.splitlines():
+        marker_match = FENCE_START.match(line)
+        if fence is None and marker_match:
+            marker = marker_match.group(1)
+            fence = (marker[0], len(marker))
+            continue
+        if fence is not None:
+            closing = re.fullmatch(
+                rf"[ \t]{{0,3}}{re.escape(fence[0])}{{{fence[1]},}}[ \t]*",
+                line,
+            )
+            if closing:
+                fence = None
+            continue
+        if re.match(r"^\d+\.\s+", line):
+            steps += 1
+
     return LintResult("numbered procedure steps", steps >= 2, f"found {steps} numbered steps")
