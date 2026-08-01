@@ -51,4 +51,6 @@ fail this rule.
 
 ## Numbered procedure
 
-At least two lines must begin with a `1.`-style numbered-list marker.
+At least two lines outside fenced code blocks must begin with a `1.`-style
+numbered-list marker. Numbered lines in balanced backtick or tilde fences are
+examples and do not count as procedure steps.

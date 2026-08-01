@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from agent_runbook_lint import lint_runbook
 
 
@@ -121,3 +123,39 @@ def test_tilde_fence_with_command_passes_command_check(tmp_path):
     )
 
     assert result.passed
+
+
+@pytest.mark.parametrize(("opening", "closing"), [("```text", "````"), ("~~~text", "~~~~")])
+def test_numbered_steps_inside_fence_do_not_count(tmp_path, opening, closing):
+    runbook = tmp_path / "fenced-steps.md"
+    runbook.write_text(
+        f"## Steps\n\nAn example only:\n\n{opening}\n1. First example\n2. Second example\n{closing}\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "numbered procedure steps"
+    )
+
+    assert not result.passed
+    assert result.detail == "found 0 numbered steps"
+
+
+def test_numbered_steps_outside_fence_count(tmp_path):
+    runbook = tmp_path / "real-steps.md"
+    runbook.write_text(
+        "## Steps\n\n1. Prepare the input.\n2. Record the result.\n\n```text\n"
+        "1. Example only\n2. Still an example\n```\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "numbered procedure steps"
+    )
+
+    assert result.passed
+    assert result.detail == "found 2 numbered steps"
