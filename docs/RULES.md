@@ -33,6 +33,10 @@ or confirmation section. A gating line contains the action and at least one of:
 - `before`, `until`, `unless`, `without`, or `prior to`
 
 Approval language elsewhere in the document does not satisfy this rule.
+Risky-action terms and gating lines inside balanced backtick or tilde fences are
+treated as examples: they neither introduce operational risky actions nor
+satisfy approval gates. A closing fence may use more markers than its opening
+fence.
 
 ## Fenced commands
 
