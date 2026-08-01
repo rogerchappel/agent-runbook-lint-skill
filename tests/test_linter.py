@@ -76,6 +76,61 @@ def test_approval_gate_must_cover_each_risky_action(tmp_path):
     assert "delete" in result.detail
 
 
+@pytest.mark.parametrize(("opening", "closing"), [("```text", "````"), ("~~~text", "~~~~")])
+def test_risky_actions_inside_fences_do_not_require_approval(tmp_path, opening, closing):
+    runbook = tmp_path / "fenced-risk.md"
+    runbook.write_text(
+        f"## Steps\n\n{opening}\npush and deploy this example\n{closing}\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "risky actions have approval gate"
+    )
+
+    assert result.passed
+    assert result.detail == "no risky actions found"
+
+
+@pytest.mark.parametrize(("opening", "closing"), [("```text", "````"), ("~~~text", "~~~~")])
+def test_approval_gates_inside_fences_do_not_cover_real_actions(tmp_path, opening, closing):
+    runbook = tmp_path / "fenced-gate.md"
+    runbook.write_text(
+        "## Steps\n\n1. Prepare.\n2. Push the branch.\n\n"
+        f"## Approval\n\n{opening}\nAsk before push.\n{closing}\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "risky actions have approval gate"
+    )
+
+    assert not result.passed
+    assert result.detail == "risky actions need approval gate: push"
+
+
+def test_real_approval_gate_outside_fence_covers_real_action(tmp_path):
+    runbook = tmp_path / "real-gate.md"
+    runbook.write_text(
+        "## Steps\n\n1. Prepare.\n2. Push the branch.\n\n"
+        "## Approval\n\nAsk before push.\n\n```text\nDeploy without approval.\n```\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "risky actions have approval gate"
+    )
+
+    assert result.passed
+    assert result.detail == "explicit approval gate covers: push"
+
+
 def test_empty_fence_does_not_count_as_fenced_command():
     report = lint_runbook(Path("fixtures/incidental-words-runbook.md"))
     result = next(result for result in report.results if result.name == "commands are fenced")

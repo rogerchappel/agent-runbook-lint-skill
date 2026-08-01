@@ -133,10 +133,33 @@ def _heading_matches(heading: str, needles: tuple[str, ...]) -> bool:
     return any(re.search(rf"\b{re.escape(needle)}s?\b", normalized) for needle in needles)
 
 
+def _lines_outside_fences(text: str) -> tuple[str, ...]:
+    lines: list[str] = []
+    fence: tuple[str, int] | None = None
+
+    for line in text.splitlines():
+        marker_match = FENCE_START.match(line)
+        if fence is None and marker_match:
+            marker = marker_match.group(1)
+            fence = (marker[0], len(marker))
+            continue
+        if fence is not None:
+            closing = re.fullmatch(
+                rf"[ \t]{{0,3}}{re.escape(fence[0])}{{{fence[1]},}}[ \t]*",
+                line,
+            )
+            if closing:
+                fence = None
+            continue
+        lines.append(line)
+
+    return tuple(lines)
+
+
 def _check_risky_approval(
     text: str, sections: tuple[MarkdownSection, ...]
 ) -> LintResult:
-    lowered = text.lower()
+    lowered = "\n".join(_lines_outside_fences(text)).lower()
     risky = [
         action
         for action in RISKY_ACTIONS
@@ -149,7 +172,7 @@ def _check_risky_approval(
         line.lower()
         for section in sections
         if _heading_matches(section.heading, REQUIRED_TOPICS["approval"])
-        for line in section.body.splitlines()
+        for line in _lines_outside_fences(section.body)
         if line.strip()
     ]
     gated = {
@@ -225,24 +248,8 @@ def _is_command_like(line: str) -> bool:
 
 
 def _check_numbered_steps(text: str) -> LintResult:
-    steps = 0
-    fence: tuple[str, int] | None = None
-
-    for line in text.splitlines():
-        marker_match = FENCE_START.match(line)
-        if fence is None and marker_match:
-            marker = marker_match.group(1)
-            fence = (marker[0], len(marker))
-            continue
-        if fence is not None:
-            closing = re.fullmatch(
-                rf"[ \t]{{0,3}}{re.escape(fence[0])}{{{fence[1]},}}[ \t]*",
-                line,
-            )
-            if closing:
-                fence = None
-            continue
-        if re.match(r"^\d+\.\s+", line):
-            steps += 1
+    steps = sum(
+        1 for line in _lines_outside_fences(text) if re.match(r"^\d+\.\s+", line)
+    )
 
     return LintResult("numbered procedure steps", steps >= 2, f"found {steps} numbered steps")
