@@ -167,6 +167,21 @@ def test_command_like_content_outside_fence_fails(tmp_path):
     assert "outside fences on line 3" in result.detail
 
 
+@pytest.mark.parametrize("marker", ["1)", "  1)"])
+def test_parenthesized_ordered_command_outside_fence_fails(tmp_path, marker):
+    runbook = tmp_path / "outside-parenthesized.md"
+    runbook.write_text(f"## Steps\n\n{marker} npm test\n2) Record output.\n", encoding="utf-8")
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "commands are fenced"
+    )
+
+    assert not result.passed
+    assert "outside fences on line 3" in result.detail
+
+
 def test_tilde_fence_with_command_passes_command_check(tmp_path):
     runbook = tmp_path / "tilde.md"
     runbook.write_text("## Steps\n\n~~~shell\npython -m pytest\n~~~\n", encoding="utf-8")
@@ -214,3 +229,34 @@ def test_numbered_steps_outside_fence_count(tmp_path):
 
     assert result.passed
     assert result.detail == "found 2 numbered steps"
+
+
+def test_parenthesized_and_indented_numbered_steps_outside_fence_count(tmp_path):
+    runbook = tmp_path / "parenthesized-steps.md"
+    runbook.write_text(
+        "## Steps\n\n  1) Prepare the input.\n   2) Record the result.\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "numbered procedure steps"
+    )
+
+    assert result.passed
+    assert result.detail == "found 2 numbered steps"
+
+
+def test_parenthesized_numbered_steps_inside_fence_do_not_count(tmp_path):
+    runbook = tmp_path / "fenced-parenthesized-steps.md"
+    runbook.write_text(
+        "## Steps\n\n```text\n  1) npm test\n   2) Record the result.\n```\n",
+        encoding="utf-8",
+    )
+
+    results = {result.name: result for result in lint_runbook(runbook).results}
+
+    assert results["commands are fenced"].passed
+    assert not results["numbered procedure steps"].passed
+    assert results["numbered procedure steps"].detail == "found 0 numbered steps"
