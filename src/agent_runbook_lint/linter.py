@@ -243,13 +243,15 @@ def _check_command_blocks(text: str) -> LintResult:
 
 
 def _is_command_like(line: str) -> bool:
-    stripped = re.sub(r"^(?:[-*+]|\d+\.)[ \t]+", "", line.strip())
+    stripped = re.sub(r"^(?:[-*+]|\d+[.)])[ \t]+", "", line.strip())
     return bool(COMMAND_LINE.match(stripped))
 
 
 def _check_numbered_steps(text: str) -> LintResult:
     steps = sum(
-        1 for line in _lines_outside_fences(text) if re.match(r"^\d+\.\s+", line)
+        1
+        for line in _lines_outside_fences(text)
+        if re.match(r"^[ ]{0,3}\d+[.)][ \t]+", line)
     )
 
     return LintResult("numbered procedure steps", steps >= 2, f"found {steps} numbered steps")
