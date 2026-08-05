@@ -41,8 +41,9 @@ fence.
 ## Fenced commands
 
 The document must contain at least one command-like line inside a balanced
-backtick or tilde fence. Every command-like line must be fenced. Markdown list
-markers and shell prompts are ignored before matching. A line is command-like
+backtick or tilde fence. Every command-like line must be fenced. Markdown
+bullet markers and ordered-list markers using either `N.` or `N)` are ignored
+before matching, as are shell prompts. A line is command-like
 when its first executable is one of:
 
 `npm`, `npx`, `pnpm`, `yarn`, `python`, `python3`, `pip`, `pip3`, `git`, `gh`,
@@ -55,6 +56,7 @@ fail this rule.
 
 ## Numbered procedure
 
-At least two lines outside fenced code blocks must begin with a `1.`-style
-numbered-list marker. Numbered lines in balanced backtick or tilde fences are
-examples and do not count as procedure steps.
+At least two lines outside fenced code blocks must begin with an ordered-list
+marker using either CommonMark delimiter: `N.` or `N)`. Up to three leading
+spaces are accepted as normal Markdown indentation. Numbered lines in balanced
+backtick or tilde fences are examples and do not count as procedure steps.
