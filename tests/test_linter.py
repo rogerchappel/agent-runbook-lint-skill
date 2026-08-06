@@ -33,6 +33,57 @@ def test_required_topic_section_must_have_content(tmp_path):
     assert not next(result for result in report.results if result.name == "required topic: goal").passed
 
 
+@pytest.mark.parametrize(
+    ("opening", "pseudo_closing", "closing"),
+    [
+        ("```text", "```not-a-closing-fence", "````"),
+        ("~~~text", "~~~not-a-closing-fence", "~~~~"),
+    ],
+)
+def test_required_topics_ignore_headings_after_invalid_fence_closer(
+    tmp_path, opening, pseudo_closing, closing
+):
+    runbook = tmp_path / "fenced-heading.md"
+    runbook.write_text(
+        f"{opening}\n{pseudo_closing}\n## Goal\n\nExample only.\n{closing}\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "required topic: goal"
+    )
+
+    assert not result.passed
+
+
+@pytest.mark.parametrize(
+    ("opening", "pseudo_closing", "closing"),
+    [
+        ("```text", "```not-a-closing-fence", "````"),
+        ("~~~text", "~~~not-a-closing-fence", "~~~~"),
+    ],
+)
+def test_required_topics_accept_headings_after_eventual_valid_fence_closer(
+    tmp_path, opening, pseudo_closing, closing
+):
+    runbook = tmp_path / "post-fence-heading.md"
+    runbook.write_text(
+        f"{opening}\n{pseudo_closing}\n## Goal\n\nExample only.\n{closing}\n"
+        "## Goal\n\nReal objective.\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "required topic: goal"
+    )
+
+    assert result.passed
+
+
 def test_approval_word_outside_gate_does_not_cover_risky_action(tmp_path):
     text = Path("fixtures/good-runbook.md").read_text(encoding="utf-8")
     text = text.replace(
