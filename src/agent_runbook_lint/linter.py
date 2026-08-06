@@ -102,14 +102,8 @@ def _parse_sections(text: str) -> tuple[MarkdownSection, ...]:
     fence: tuple[str, int] | None = None
 
     for line in text.splitlines():
-        fence_match = FENCE_START.match(line)
-        if fence_match:
-            marker = fence_match.group(1)
-            marker_type = marker[0]
-            if fence is None:
-                fence = (marker_type, len(marker))
-            elif marker_type == fence[0] and len(marker) >= fence[1]:
-                fence = None
+        fence, is_boundary = _transition_fence(line, fence)
+        if is_boundary:
             if heading is not None:
                 body.append(line)
             continue
@@ -133,23 +127,33 @@ def _heading_matches(heading: str, needles: tuple[str, ...]) -> bool:
     return any(re.search(rf"\b{re.escape(needle)}s?\b", normalized) for needle in needles)
 
 
+def _transition_fence(
+    line: str, fence: tuple[str, int] | None
+) -> tuple[tuple[str, int] | None, bool]:
+    if fence is None:
+        opening = FENCE_START.match(line)
+        if opening is None:
+            return None, False
+        marker = opening.group(1)
+        return (marker[0], len(marker)), True
+
+    closing = re.fullmatch(
+        rf"[ \t]{{0,3}}{re.escape(fence[0])}{{{fence[1]},}}[ \t]*",
+        line,
+    )
+    return (None, True) if closing else (fence, False)
+
+
 def _lines_outside_fences(text: str) -> tuple[str, ...]:
     lines: list[str] = []
     fence: tuple[str, int] | None = None
 
     for line in text.splitlines():
-        marker_match = FENCE_START.match(line)
-        if fence is None and marker_match:
-            marker = marker_match.group(1)
-            fence = (marker[0], len(marker))
+        was_fenced = fence is not None
+        fence, is_boundary = _transition_fence(line, fence)
+        if is_boundary:
             continue
-        if fence is not None:
-            closing = re.fullmatch(
-                rf"[ \t]{{0,3}}{re.escape(fence[0])}{{{fence[1]},}}[ \t]*",
-                line,
-            )
-            if closing:
-                fence = None
+        if was_fenced:
             continue
         lines.append(line)
 
@@ -201,24 +205,18 @@ def _check_command_blocks(text: str) -> LintResult:
     outside_commands: list[int] = []
 
     for line_number, line in enumerate(text.splitlines(), start=1):
-        marker_match = FENCE_START.match(line)
-        if fence is None and marker_match:
-            marker = marker_match.group(1)
-            fence = (marker[0], len(marker))
+        was_fenced = fence is not None
+        fence, is_boundary = _transition_fence(line, fence)
+        if is_boundary and not was_fenced:
             current = []
             continue
-        if fence is not None:
-            closing = re.fullmatch(
-                rf"[ \t]{{0,3}}{re.escape(fence[0])}{{{fence[1]},}}[ \t]*",
-                line,
-            )
-            if closing:
-                blocks.append(current or [])
-                current = None
-                fence = None
-            else:
-                assert current is not None
-                current.append(line)
+        if is_boundary:
+            blocks.append(current or [])
+            current = None
+            continue
+        if was_fenced:
+            assert current is not None
+            current.append(line)
             continue
         if _is_command_like(line):
             outside_commands.append(line_number)

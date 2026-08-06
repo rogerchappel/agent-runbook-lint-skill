@@ -19,7 +19,10 @@ matches when it contains one of these whole-word terms (with an optional plural
 - Approval: `approval`, `permission`, `confirm`
 - Stop conditions: `stop`, `blocked`, `abort`, `do not continue`
 
-Headings inside fenced code blocks are ignored.
+Headings inside fenced code blocks are ignored. A fence closes only with the
+same marker (backtick or tilde), at least as many markers as the opening fence, and no
+trailing info text. A fence-like line with trailing text remains example
+content; headings after it are still ignored until a valid closing fence.
 
 ## Risky-action approval gates
 
@@ -35,8 +38,7 @@ or confirmation section. A gating line contains the action and at least one of:
 Approval language elsewhere in the document does not satisfy this rule.
 Risky-action terms and gating lines inside balanced backtick or tilde fences are
 treated as examples: they neither introduce operational risky actions nor
-satisfy approval gates. A closing fence may use more markers than its opening
-fence.
+satisfy approval gates. Closing fences follow the rule described above.
 
 ## Fenced commands
 
