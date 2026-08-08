@@ -16,12 +16,27 @@ REQUIRED_TOPICS = {
     "stop conditions": ("stop", "blocked", "abort", "do not continue"),
 }
 
-RISKY_ACTIONS = ("push", "publish", "deploy", "send", "delete", "merge", "tag release")
+RISKY_ACTIONS = {
+    "push": re.compile(r"\bpush\b"),
+    "publish": re.compile(r"\bpublish\b"),
+    "deploy": re.compile(r"\bdeploy\b"),
+    "send": re.compile(r"\bsend\b"),
+    "delete": re.compile(r"\bdelete\b"),
+    "merge": re.compile(r"\bmerge\b"),
+    "tag release": re.compile(
+        r"\b(?:tag(?:ging)?[ \t]+(?:a[ \t]+|the[ \t]+)?release"
+        r"|creat(?:e|ing)[ \t]+(?:a[ \t]+|the[ \t]+)?release[ \t]+tag)\b"
+    ),
+}
 ATX_HEADING = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$")
 FENCE_START = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})(.*)$")
 GATE_LANGUAGE = re.compile(
     r"\b(?:ask|obtain|request|require(?:d|s)?|receive|secure|confirm)\b"
     r"|\b(?:before|until|unless|without|prior[ \t]+to)\b"
+)
+APPROVAL_DENIAL = re.compile(
+    r"\b(?:approval|permission|confirmation)\b[^.\n;]*\b(?:is|are)?[ \t]*not[ \t]+required\b"
+    r"|\bno[ \t]+(?:approval|permission|confirmation)\b[^.\n;]*\brequired\b"
 )
 COMMAND_LINE = re.compile(
     r"^(?:\$\s*)?"
@@ -164,11 +179,7 @@ def _check_risky_approval(
     text: str, sections: tuple[MarkdownSection, ...]
 ) -> LintResult:
     lowered = "\n".join(_lines_outside_fences(text)).lower()
-    risky = [
-        action
-        for action in RISKY_ACTIONS
-        if re.search(rf"\b{re.escape(action)}\b", lowered)
-    ]
+    risky = [action for action, pattern in RISKY_ACTIONS.items() if pattern.search(lowered)]
     if not risky:
         return LintResult("risky actions have approval gate", True, "no risky actions found")
 
@@ -183,7 +194,9 @@ def _check_risky_approval(
         action
         for action in risky
         if any(
-            re.search(rf"\b{re.escape(action)}\b", line) and GATE_LANGUAGE.search(line)
+            RISKY_ACTIONS[action].search(line)
+            and GATE_LANGUAGE.search(line)
+            and not APPROVAL_DENIAL.search(line)
             for line in approval_lines
         )
     }
