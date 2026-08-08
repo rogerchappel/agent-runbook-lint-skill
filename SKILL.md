@@ -19,6 +19,9 @@ The skill reads runbooks and may write a report file. It must not execute runboo
 ## Approval Requirements
 
 Any follow-up action that writes to GitHub, Slack, CRM, project-management tools, or other external accounts requires explicit approval in the owning workflow.
+This includes release operations worded as `tag the release` or `create a
+release tag`. An approval section that says approval is not required is not an
+approval gate.
 
 ## Examples
 
@@ -30,4 +33,3 @@ agent-runbook-lint check RUNBOOK.md --report reports/runbook-lint.md
 ## Validation Workflow
 
 Run `npm test`, `npm run check`, and `npm run smoke` before using the report in a release-candidate PR.
-

@@ -18,6 +18,10 @@ npm run smoke
 See [Built-In Rules](docs/RULES.md) for the exact deterministic matching
 semantics.
 
+Release operations such as `tag the release` and `create a release tag` are
+risky actions. They pass only when the approval section explicitly requires
+approval for the same action; saying approval is not required does not pass.
+
 ## Use Cases
 
 - Review release-candidate runbooks before a scheduled automation lane runs them.
