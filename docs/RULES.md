@@ -27,15 +27,21 @@ content; headings after it are still ignored until a valid closing fence.
 ## Risky-action approval gates
 
 The risky-action terms are `push`, `publish`, `deploy`, `send`, `delete`,
-`merge`, and `tag release`. If any appears in the document, every distinct
-action found must also appear on a gating line inside an approval, permission,
-or confirmation section. A gating line contains the action and at least one of:
+`merge`, and operational release-tag wording. Release-tag wording includes
+`tag release`, `tag a release`, `tag the release`, `tagging the release`,
+`create a release tag`, and `create the release tag`. Descriptive phrases such
+as `release tag format` and `release tagging policy` do not count. If any risky
+action appears in the document, every distinct action found must also appear on
+a gating line inside an approval, permission, or confirmation section. A gating
+line contains the action and at least one of:
 
 - `ask`, `obtain`, `request`, `require`, `required`, `requires`, `receive`,
   `secure`, or `confirm`
 - `before`, `until`, `unless`, `without`, or `prior to`
 
 Approval language elsewhere in the document does not satisfy this rule.
+Explicit denials such as `approval is not required` do not satisfy the gate,
+even when the same line otherwise contains gating language such as `before`.
 Risky-action terms and gating lines inside balanced backtick or tilde fences are
 treated as examples: they neither introduce operational risky actions nor
 satisfy approval gates. Closing fences follow the rule described above.

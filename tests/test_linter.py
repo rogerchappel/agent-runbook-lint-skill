@@ -182,6 +182,92 @@ def test_real_approval_gate_outside_fence_covers_real_action(tmp_path):
     assert result.detail == "explicit approval gate covers: push"
 
 
+@pytest.mark.parametrize(
+    "wording",
+    [
+        "Tag release 1.2.3.",
+        "Tag a release for the verified commit.",
+        "Tag the release after verification.",
+        "Create a release tag for the verified commit.",
+        "Create the release tag after verification.",
+        "Tagging the release is the final step.",
+    ],
+)
+def test_release_tagging_wording_requires_approval(tmp_path, wording):
+    runbook = tmp_path / "release-tag.md"
+    runbook.write_text(
+        f"## Steps\n\n1. Verify the commit.\n2. {wording}\n\n"
+        "## Approval\n\nApproval is not required before creating the release tag.\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "risky actions have approval gate"
+    )
+
+    assert not result.passed
+    assert result.detail == "risky actions need approval gate: tag release"
+
+
+def test_release_tagging_wording_accepts_explicit_gate(tmp_path):
+    runbook = tmp_path / "gated-release-tag.md"
+    runbook.write_text(
+        "## Steps\n\n1. Verify the commit.\n2. Create a release tag.\n\n"
+        "## Approval\n\nObtain approval before creating the release tag.\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "risky actions have approval gate"
+    )
+
+    assert result.passed
+    assert result.detail == "explicit approval gate covers: tag release"
+
+
+@pytest.mark.parametrize(
+    "prose",
+    [
+        "The release-tag policy belongs to the maintainers.",
+        "The release tag format is vMAJOR.MINOR.PATCH.",
+        "Release tagging policy is documented elsewhere.",
+    ],
+)
+def test_descriptive_release_tag_prose_is_not_a_risky_action(tmp_path, prose):
+    runbook = tmp_path / "tag-policy.md"
+    runbook.write_text(f"## Notes\n\n{prose}\n", encoding="utf-8")
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "risky actions have approval gate"
+    )
+
+    assert result.passed
+    assert result.detail == "no risky actions found"
+
+
+def test_release_tagging_inside_fence_remains_an_example(tmp_path):
+    runbook = tmp_path / "fenced-release-tag.md"
+    runbook.write_text(
+        "## Steps\n\n```text\nCreate a release tag.\n```\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "risky actions have approval gate"
+    )
+
+    assert result.passed
+    assert result.detail == "no risky actions found"
+
+
 def test_empty_fence_does_not_count_as_fenced_command():
     report = lint_runbook(Path("fixtures/incidental-words-runbook.md"))
     result = next(result for result in report.results if result.name == "commands are fenced")
