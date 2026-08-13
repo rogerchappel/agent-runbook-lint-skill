@@ -99,7 +99,7 @@ def lint_runbook(path: Path) -> RunbookReport:
     results: list[LintResult] = []
     for topic, needles in REQUIRED_TOPICS.items():
         found = any(
-            section.body.strip() and _heading_matches(section.heading, needles)
+            _section_has_content(section.body) and _heading_matches(section.heading, needles)
             for section in sections
         )
         detail = "non-empty Markdown section found" if found else "missing non-empty Markdown section"
@@ -140,6 +140,15 @@ def _parse_sections(text: str) -> tuple[MarkdownSection, ...]:
 def _heading_matches(heading: str, needles: tuple[str, ...]) -> bool:
     normalized = re.sub(r"[*_`~]", "", heading).lower()
     return any(re.search(rf"\b{re.escape(needle)}s?\b", normalized) for needle in needles)
+
+
+def _section_has_content(body: str) -> bool:
+    fence: tuple[str, int] | None = None
+    for line in body.splitlines():
+        fence, is_boundary = _transition_fence(line, fence)
+        if not is_boundary and line.strip():
+            return True
+    return False
 
 
 def _transition_fence(
