@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 
 from .linter import lint_runbook
 
@@ -21,10 +22,15 @@ def main(argv: list[str] | None = None) -> int:
         report = lint_runbook(args.runbook)
         output = report.to_markdown()
         if args.report:
+            if args.report.resolve() == args.runbook.resolve():
+                print(
+                    "error: report destination must not be the source runbook",
+                    file=sys.stderr,
+                )
+                return 2
             args.report.parent.mkdir(parents=True, exist_ok=True)
             args.report.write_text(output, encoding="utf-8")
         else:
             print(output)
         return 0 if report.passed else 1
     return 2
-
