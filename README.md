@@ -4,9 +4,24 @@ Lint agent runbooks before automation follows them. `agent-runbook-lint` checks 
 
 ## Quickstart
 
+Python 3.10 or newer is required. This setup selects an installed supported
+interpreter, verifies its version, and keeps the editable install isolated:
+
 ```bash
-python3 -m pip install -e ".[dev]"
-agent-runbook-lint check docs/ORCHESTRATION.md --report report.md
+PYTHON_BIN="$(
+  for candidate in python3.14 python3.13 python3.12 python3.11 python3.10 python3; do
+    if command -v "$candidate" >/dev/null 2>&1 &&
+       "$candidate" -c 'import sys; raise SystemExit(sys.version_info < (3, 10))'; then
+      command -v "$candidate"
+      break
+    fi
+  done
+)"
+test -n "$PYTHON_BIN" || { echo "Python 3.10 or newer is required" >&2; exit 1; }
+"$PYTHON_BIN" --version
+"$PYTHON_BIN" -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+.venv/bin/agent-runbook-lint check fixtures/good-runbook.md --report report.md
 ```
 
 Smoke test:

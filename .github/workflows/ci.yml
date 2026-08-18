@@ -20,6 +20,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+      - run: PYTHON_BIN=python bash scripts/validate-quickstart.sh
       - run: python -m pip install -e ".[dev]"
       - run: npm test
       - run: npm run check
