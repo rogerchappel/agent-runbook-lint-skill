@@ -6,9 +6,10 @@ The first release ships with deterministic Markdown checks:
 
 Goal, inputs, steps, verification, rollback, evidence, approval, and stop
 conditions must each be represented by a non-empty ATX-style Markdown section
-(`#` through `######`). Incidental words in prose do not count. A heading
-matches when it contains one of these whole-word terms (with an optional plural
-`s`):
+(`#` through `######`). As in CommonMark, an ATX heading may have zero to three
+leading spaces; four spaces make the line indented code, not a heading.
+Incidental words in prose do not count. A heading matches when it contains one
+of these whole-word terms (with an optional plural `s`):
 
 - Goal: `goal`, `mission`, `objective`
 - Inputs: `input`, `prerequisite`, `source`
