@@ -33,6 +33,64 @@ def test_required_topic_section_must_have_content(tmp_path):
     assert not next(result for result in report.results if result.name == "required topic: goal").passed
 
 
+@pytest.mark.parametrize("indent", ["", " ", "  ", "   "])
+def test_required_topics_accept_commonmark_atx_heading_indentation(tmp_path, indent):
+    runbook = tmp_path / "indented-heading.md"
+    runbook.write_text(f"{indent}## Goal\n\nDeliver a verified result.\n", encoding="utf-8")
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "required topic: goal"
+    )
+
+    assert result.passed
+
+
+def test_four_space_indented_atx_heading_is_code_not_a_section(tmp_path):
+    runbook = tmp_path / "code-heading.md"
+    runbook.write_text("    ## Goal\n\n    Example only.\n", encoding="utf-8")
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "required topic: goal"
+    )
+
+    assert not result.passed
+
+
+def test_indented_atx_heading_inside_fence_is_ignored(tmp_path):
+    runbook = tmp_path / "fenced-indented-heading.md"
+    runbook.write_text("```markdown\n   ## Goal\n\nExample only.\n```\n", encoding="utf-8")
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "required topic: goal"
+    )
+
+    assert not result.passed
+
+
+def test_indented_runbook_sections_and_approval_gate_pass_end_to_end(tmp_path):
+    source = Path("fixtures/good-runbook.md").read_text(encoding="utf-8")
+    runbook = tmp_path / "indented-runbook.md"
+    runbook.write_text(
+        "\n".join(f"   {line}" if line.startswith("#") else line for line in source.splitlines())
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = lint_runbook(runbook)
+
+    assert report.passed, report.to_markdown()
+    approval = next(
+        result for result in report.results if result.name == "risky actions have approval gate"
+    )
+    assert approval.detail == "explicit approval gate covers: push, publish, deploy, send, delete, merge"
+
+
 @pytest.mark.parametrize(
     ("opening", "closing"),
     [
