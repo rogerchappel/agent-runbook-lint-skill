@@ -28,7 +28,7 @@ RISKY_ACTIONS = {
         r"|creat(?:e|ing)[ \t]+(?:a[ \t]+|the[ \t]+)?release[ \t]+tag)\b"
     ),
 }
-ATX_HEADING = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$")
+ATX_HEADING = re.compile(r"^[ ]{0,3}(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$")
 FENCE_START = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})(.*)$")
 GATE_LANGUAGE = re.compile(
     r"\b(?:ask|obtain|request|require(?:d|s)?|receive|secure|confirm)\b"
