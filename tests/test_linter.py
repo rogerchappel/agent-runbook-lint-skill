@@ -433,6 +433,82 @@ def test_tilde_fence_with_command_passes_command_check(tmp_path):
     assert result.passed
 
 
+@pytest.mark.parametrize(
+    "command",
+    [
+        "pytest -q",
+        "ruff check .",
+        "tox -e py310",
+        "uv run pytest -q",
+    ],
+)
+def test_python_tool_commands_inside_fences_pass(tmp_path, command):
+    runbook = tmp_path / "python-tool.md"
+    runbook.write_text(
+        f"## Steps\n\n```console\n{command}\n```\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "commands are fenced"
+    )
+
+    assert result.passed
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "pytest -q",
+        "- ruff check .",
+        "1. tox -e py310",
+        "2) uv run pytest -q",
+    ],
+)
+def test_python_tool_commands_outside_fences_fail(tmp_path, line):
+    runbook = tmp_path / "unfenced-python-tool.md"
+    runbook.write_text(
+        f"## Steps\n\n{line}\n\n```console\npython --version\n```\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "commands are fenced"
+    )
+
+    assert not result.passed
+    assert "outside fences on line 3" in result.detail
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "The pytest suite is quick.",
+        "Use ruff when editing Python.",
+        "Our tox environments cover supported versions.",
+        "The uv guide explains environment setup.",
+    ],
+)
+def test_python_tool_names_in_prose_are_not_commands(tmp_path, line):
+    runbook = tmp_path / "python-tool-prose.md"
+    runbook.write_text(
+        f"## Steps\n\n{line}\n\n```console\npython --version\n```\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "commands are fenced"
+    )
+
+    assert result.passed
+
+
 @pytest.mark.parametrize(("opening", "closing"), [("```text", "````"), ("~~~text", "~~~~")])
 def test_numbered_steps_inside_fence_do_not_count(tmp_path, opening, closing):
     runbook = tmp_path / "fenced-steps.md"
