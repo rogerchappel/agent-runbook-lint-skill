@@ -55,10 +55,12 @@ bullet markers and ordered-list markers using either `N.` or `N)` are ignored
 before matching, as are shell prompts. A line is command-like
 when its first executable is one of:
 
-`npm`, `npx`, `pnpm`, `yarn`, `python`, `python3`, `pip`, `pip3`, `git`, `gh`,
-`curl`, `wget`, `make`, `cmake`, `docker`, `kubectl`, `terraform`, `cargo`,
-`go`, `java`, `mvn`, `gradle`, `bash`, `sh`, `agent-runbook-lint`, or a
-relative `./...` executable.
+`npm`, `npx`, `pnpm`, `yarn`, `python`, `python3`, `pip`, `pip3`, `pytest`,
+`ruff`, `tox`, `uv`, `git`, `gh`, `curl`, `wget`, `make`, `cmake`, `docker`,
+`kubectl`, `terraform`, `cargo`, `go`, `java`, `mvn`, `gradle`, `bash`, `sh`,
+`agent-runbook-lint`, or a relative `./...` executable. The executable must be
+the first token after an optional Markdown list marker and optional `$` shell
+prompt, so ordinary prose that mentions a tool name is not a command line.
 
 Empty fences, unbalanced fences, and recognized command lines outside fences
 fail this rule.
