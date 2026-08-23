@@ -38,11 +38,16 @@ APPROVAL_DENIAL = re.compile(
     r"\b(?:approval|permission|confirmation)\b[^.\n;]*\b(?:is|are)?[ \t]*not[ \t]+required\b"
     r"|\bno[ \t]+(?:approval|permission|confirmation)\b[^.\n;]*\brequired\b"
 )
+COMMAND_EXECUTABLES = (
+    "npm", "npx", "pnpm", "yarn",
+    "python", "python3", "pip", "pip3", "pytest", "ruff", "tox", "uv",
+    "git", "gh", "curl", "wget", "make", "cmake", "docker", "kubectl",
+    "terraform", "cargo", "go", "java", "mvn", "gradle", "bash", "sh",
+    "agent-runbook-lint",
+)
 COMMAND_LINE = re.compile(
     r"^(?:\$\s*)?"
-    r"(?:npm|npx|pnpm|yarn|python(?:3)?|pip(?:3)?|git|gh|curl|wget|make|cmake|"
-    r"docker|kubectl|terraform|cargo|go|java|mvn|gradle|bash|sh|"
-    r"\./[\w./-]+|agent-runbook-lint)"
+    rf"(?:{'|'.join(re.escape(command) for command in COMMAND_EXECUTABLES)}|\./[\w./-]+)"
     r"(?:\s|$)"
 )
 
