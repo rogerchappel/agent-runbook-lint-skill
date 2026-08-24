@@ -47,6 +47,14 @@ approval for the same action; saying approval is not required does not pass.
 
 The checker is local-first and read-only for source runbooks. It does not execute commands found in the runbook. It writes only the report path requested by `--report`, and refuses a destination that resolves to the source runbook itself. Parent directories for any other report destination are created as needed.
 
+## Exit Codes and Errors
+
+`agent-runbook-lint check` exits with `0` when every lint check passes, `1`
+when the runbook is readable but fails one or more checks, and `2` for command
+usage or file I/O errors. Missing or unreadable inputs, directories supplied as
+inputs, non-UTF-8 runbooks, and report creation or write failures produce one
+concise `error:` line on stderr without a Python traceback.
+
 ## Limitations
 
 The linter validates runbook structure and risky wording. It cannot prove that the documented workflow is operationally complete.
