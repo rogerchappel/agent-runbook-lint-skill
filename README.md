@@ -24,11 +24,25 @@ test -n "$PYTHON_BIN" || { echo "Python 3.10 or newer is required" >&2; exit 1; 
 .venv/bin/agent-runbook-lint check fixtures/good-runbook.md --report report.md
 ```
 
-Smoke test:
+Smoke test — the npm scripts resolve the repo-local `.venv` interpreter
+created above, so a machine that only followed the Quickstart can run the
+full suite without touching the ambient `python3`:
 
 ```bash
 npm run smoke
 ```
+
+After the Quickstart, these commands all pass against `./.venv`:
+
+| Command | Runs |
+| --- | --- |
+| `npm test` | pytest suite (`.venv` interpreter) |
+| `npm run check` | byte-compile `src` and `tests` |
+| `npm run smoke` | lint `fixtures/good-runbook.md` to a report |
+
+The npm scripts resolve the interpreter via `scripts/python-for-npm.sh`,
+which prefers `.venv/bin/python` (or `.venv/Scripts/python.exe`) and falls
+back to an ambient `python3.10+` when no repo-local `.venv` exists.
 
 See [Built-In Rules](docs/RULES.md) for the exact deterministic matching
 semantics.
