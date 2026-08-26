@@ -32,4 +32,4 @@ agent-runbook-lint check RUNBOOK.md --report reports/runbook-lint.md
 
 ## Validation Workflow
 
-Run `npm test`, `npm run check`, and `npm run smoke` before using the report in a release-candidate PR.
+Run `npm test`, `npm run check`, and `npm run smoke` before using the report in a release-candidate PR. The npm scripts resolve the repo-local `.venv` interpreter created by the README Quickstart (falling back to an ambient `python3`), so first follow the Quickstart from a fresh checkout.
