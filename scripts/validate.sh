@@ -3,17 +3,24 @@ set -euo pipefail
 
 python_bin="${PYTHON_BIN:-python3}"
 "$python_bin" -c 'import sys; raise SystemExit(sys.version_info < (3, 10))'
+"$python_bin" --version
 
 venv_dir="$(mktemp -d "${TMPDIR:-/tmp}/agent-runbook-lint-validation.XXXXXX")"
-trap 'rm -rf "$venv_dir"' EXIT
+trap 'rm -rf "$venv_dir" .venv' EXIT
 
-"$python_bin" -m venv "$venv_dir/venv"
-validation_python="$venv_dir/venv/bin/python"
-"$validation_python" -m pip install -e ".[dev]"
+# Repo-local .venv, exactly as the README Quickstart documents it. The npm
+# scripts resolve this interpreter via scripts/python-for-npm.sh, so this is
+# also the environment the documented `npm test` / `npm run check` /
+# `npm run smoke` commands will use.
+"$python_bin" -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
 
-PYTHON_BIN="$validation_python" bash scripts/validate-quickstart.sh
-"$validation_python" -m compileall src tests
-"$validation_python" -m pytest
-"$validation_python" -m agent_runbook_lint check fixtures/good-runbook.md \
-  --report "$venv_dir/report.md"
-test -s "$venv_dir/report.md"
+# Exercise the documented cross-tool commands: a bare checkout that followed
+# only the Quickstart must be able to run the suite via npm.
+npm test
+npm run check
+npm run smoke
+test -s /tmp/agent-runbook-lint-report.md
+
+# Pure-python quickstart path (no npm required), kept as the CLI-level check.
+PYTHON_BIN="$python_bin" bash scripts/validate-quickstart.sh
