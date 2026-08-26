@@ -4,9 +4,9 @@
   "private": true,
   "description": "Local-first lint checks for agent automation runbooks.",
   "scripts": {
-    "test": "python3 -m pytest",
-    "check": "python3 -m compileall src tests",
-    "smoke": "python3 -m agent_runbook_lint check fixtures/good-runbook.md --report /tmp/agent-runbook-lint-report.md"
+    "test": "\"$(bash scripts/python-for-npm.sh)\" -m pytest",
+    "check": "\"$(bash scripts/python-for-npm.sh)\" -m compileall src tests",
+    "smoke": "\"$(bash scripts/python-for-npm.sh)\" -m agent_runbook_lint check fixtures/good-runbook.md --report /tmp/agent-runbook-lint-report.md"
   }
 }
 
