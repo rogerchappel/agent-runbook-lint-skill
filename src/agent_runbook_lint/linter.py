@@ -151,7 +151,7 @@ def _section_has_content(body: str) -> bool:
     fence: tuple[str, int] | None = None
     for line in body.splitlines():
         fence, is_boundary = _transition_fence(line, fence)
-        if not is_boundary and line.strip():
+        if fence is None and not is_boundary and line.strip():
             return True
     return False
 
