@@ -118,7 +118,7 @@ def test_required_topic_empty_fence_is_not_content(tmp_path, opening, closing):
         ("~~~text", "~~~~"),
     ],
 )
-def test_required_topic_non_empty_fence_remains_content(tmp_path, opening, closing):
+def test_required_topic_fenced_example_is_not_content(tmp_path, opening, closing):
     runbook = tmp_path / "non-empty-fenced-goal.md"
     runbook.write_text(
         f"## Goal\n\n{opening}\nDeliver a verified release.\n{closing}\n",
@@ -131,7 +131,43 @@ def test_required_topic_non_empty_fence_remains_content(tmp_path, opening, closi
         if result.name == "required topic: goal"
     )
 
+    assert not result.passed
+
+
+@pytest.mark.parametrize(
+    ("opening", "closing"),
+    [
+        ("```text", "````"),
+        ("~~~text", "~~~~"),
+    ],
+)
+def test_required_topic_prose_outside_fenced_example_is_content(tmp_path, opening, closing):
+    runbook = tmp_path / "mixed-fenced-goal.md"
+    runbook.write_text(
+        f"## Goal\n\n{opening}\nExample only.\n{closing}\nDeliver a verified release.\n",
+        encoding="utf-8",
+    )
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "required topic: goal"
+    )
+
     assert result.passed
+
+
+def test_required_topic_unbalanced_fence_does_not_expose_example_content(tmp_path):
+    runbook = tmp_path / "unbalanced-fenced-goal.md"
+    runbook.write_text("## Goal\n\n```text\nExample only.\n", encoding="utf-8")
+
+    result = next(
+        result
+        for result in lint_runbook(runbook).results
+        if result.name == "required topic: goal"
+    )
+
+    assert not result.passed
 
 
 @pytest.mark.parametrize(
