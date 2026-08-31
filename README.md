@@ -42,7 +42,10 @@ After the Quickstart, these commands all pass against `./.venv`:
 
 The npm scripts resolve the interpreter via `scripts/python-for-npm.sh`,
 which prefers `.venv/bin/python` (or `.venv/Scripts/python.exe`) and falls
-back to an ambient `python3.10+` when no repo-local `.venv` exists.
+back to an ambient `python3.10+` when no repo-local `.venv` exists. The full
+contributor validation workflow supplies its own temporary interpreter through
+`NPM_PYTHON_BIN`; this internal override keeps validation isolated without
+modifying a Quickstart `.venv`.
 
 See [Built-In Rules](docs/RULES.md) for the exact deterministic matching
 semantics.
