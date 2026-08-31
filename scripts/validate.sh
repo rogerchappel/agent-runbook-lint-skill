@@ -6,14 +6,13 @@ python_bin="${PYTHON_BIN:-python3}"
 "$python_bin" --version
 
 venv_dir="$(mktemp -d "${TMPDIR:-/tmp}/agent-runbook-lint-validation.XXXXXX")"
-trap 'rm -rf "$venv_dir" .venv' EXIT
+trap 'rm -rf "$venv_dir"' EXIT
 
-# Repo-local .venv, exactly as the README Quickstart documents it. The npm
-# scripts resolve this interpreter via scripts/python-for-npm.sh, so this is
-# also the environment the documented `npm test` / `npm run check` /
-# `npm run smoke` commands will use.
-"$python_bin" -m venv .venv
-.venv/bin/python -m pip install -e ".[dev]"
+# Keep validation isolated from a maintainer's repo-local .venv. The explicit
+# resolver override makes every npm command use this validation-owned venv.
+"$python_bin" -m venv "$venv_dir/venv"
+"$venv_dir/venv/bin/python" -m pip install -e ".[dev]"
+export NPM_PYTHON_BIN="$venv_dir/venv/bin/python"
 
 # Exercise the documented cross-tool commands: a bare checkout that followed
 # only the Quickstart must be able to run the suite via npm.

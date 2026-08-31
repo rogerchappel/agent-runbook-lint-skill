@@ -8,9 +8,10 @@
 # ambient `python3` has none of the project's packages installed.
 #
 # Resolution order:
-#   1. <base>/.venv/bin/python          (macOS/Linux: the Quickstart layout)
-#   2. <base>/.venv/Scripts/python.exe  (Windows layout, kept for parity)
-#   3. ambient `python3`                (documented fallback)
+#   1. $NPM_PYTHON_BIN                  (validation-owned environment)
+#   2. <base>/.venv/bin/python          (macOS/Linux: the Quickstart layout)
+#   3. <base>/.venv/Scripts/python.exe  (Windows layout, kept for parity)
+#   4. ambient `python3`                (documented fallback)
 #
 # Usage: scripts/python-for-npm.sh [base-dir]
 #   base-dir defaults to the repository root (parent of this script).
@@ -19,7 +20,13 @@ set -euo pipefail
 base_dir="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$base_dir"
 
-if [[ -x .venv/bin/python ]]; then
+if [[ -n "${NPM_PYTHON_BIN:-}" ]]; then
+  if [[ ! -x "$NPM_PYTHON_BIN" ]]; then
+    echo "NPM_PYTHON_BIN is not executable: $NPM_PYTHON_BIN" >&2
+    exit 1
+  fi
+  printf '%s\n' "$NPM_PYTHON_BIN"
+elif [[ -x .venv/bin/python ]]; then
   echo "$PWD/.venv/bin/python"
 elif [[ -x .venv/Scripts/python.exe ]]; then
   echo "$PWD/.venv/Scripts/python.exe"
