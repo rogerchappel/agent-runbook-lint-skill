@@ -62,7 +62,7 @@ approval for the same action; saying approval is not required does not pass.
 
 ## Safety Notes
 
-The checker is local-first and read-only for source runbooks. It does not execute commands found in the runbook. It writes only the report path requested by `--report`, and refuses a destination that resolves to the source runbook itself. Parent directories for any other report destination are created as needed.
+The checker is local-first and read-only for source runbooks. It does not execute commands found in the runbook. It writes only the report path requested by `--report`, and refuses a destination that resolves to the source runbook itself. Parent directories for any other report destination are created as needed. Reports render the source path as a Markdown code span, including paths that contain backticks.
 
 ## Exit Codes and Errors
 
