@@ -16,6 +16,22 @@ def test_bad_runbook_fails_required_topics():
     assert "risky actions need approval gate" in report.to_markdown()
 
 
+@pytest.mark.parametrize(
+    ("filename", "rendered_path"),
+    [
+        ("ordinary.md", "`ordinary.md`"),
+        ("runbook-with-`tick`.md", "``runbook-with-`tick`.md``"),
+    ],
+)
+def test_markdown_report_renders_runbook_paths_as_code_spans(tmp_path, filename, rendered_path):
+    runbook = tmp_path / filename
+    runbook.write_text(Path("fixtures/good-runbook.md").read_text(encoding="utf-8"), encoding="utf-8")
+    report = lint_runbook(runbook)
+
+    expected = rendered_path.replace(filename, str(runbook))
+    assert f"- Runbook: {expected}" in report.to_markdown()
+
+
 def test_required_topics_ignore_incidental_prose():
     report = lint_runbook(Path("fixtures/incidental-words-runbook.md"))
     topic_results = [result for result in report.results if result.name.startswith("required topic:")]
