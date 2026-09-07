@@ -84,7 +84,7 @@ class RunbookReport:
         lines = [
             "# Agent Runbook Lint Report",
             "",
-            f"- Runbook: `{self.path}`",
+            f"- Runbook: {_markdown_code_span(str(self.path))}",
             f"- Score: {self.score}",
             f"- Result: {'pass' if self.passed else 'fail'}",
             "",
@@ -96,6 +96,13 @@ class RunbookReport:
             lines.append(f"- {marker}: {result.name} - {result.detail}")
         lines.append("")
         return "\n".join(lines)
+
+
+def _markdown_code_span(value: str) -> str:
+    longest_run = max((len(run) for run in re.findall(r"`+", value)), default=0)
+    delimiter = "`" * (longest_run + 1)
+    padding = " " if value.startswith("`") or value.endswith("`") else ""
+    return f"{delimiter}{padding}{value}{padding}{delimiter}"
 
 
 def lint_runbook(path: Path) -> RunbookReport:
