@@ -626,3 +626,26 @@ def test_parenthesized_numbered_steps_inside_fence_do_not_count(tmp_path):
     assert results["commands are fenced"].passed
     assert not results["numbered procedure steps"].passed
     assert results["numbered procedure steps"].detail == "found 0 numbered steps"
+
+
+def test_custom_policy_adds_required_topic_and_preserves_defaults(tmp_path):
+    import json
+
+    runbook = Path("fixtures/good-runbook.md")
+    policy = tmp_path / "policy.json"
+    policy.write_text(json.dumps({"required_topics": {"Escalation": ["on-call", "escalation"]}}))
+    report = lint_runbook(runbook, policy)
+    custom = next(result for result in report.results if result.name == "required topic: Escalation")
+    assert not custom.passed
+    assert any(result.passed for result in report.results if result.name == "required topic: goal")
+
+
+def test_custom_policy_alias_matches_heading(tmp_path):
+    import json
+
+    runbook = tmp_path / "runbook.md"
+    runbook.write_text(Path("fixtures/good-runbook.md").read_text() + "\n## On-call\nContact the responder.\n")
+    policy = tmp_path / "policy.json"
+    policy.write_text(json.dumps({"required_topics": {"Escalation": ["on-call"]}}))
+    result = next(item for item in lint_runbook(runbook, policy).results if item.name == "required topic: Escalation")
+    assert result.passed

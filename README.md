@@ -48,7 +48,8 @@ contributor validation workflow supplies its own temporary interpreter through
 modifying a Quickstart `.venv`.
 
 See [Built-In Rules](docs/RULES.md) for the exact deterministic matching
-semantics.
+semantics. Organization-specific required sections can be added with the
+optional [`--policy` JSON file](docs/policy.md); built-in checks remain active.
 
 Release operations such as `tag the release` and `create a release tag` are
 risky actions. They pass only when the approval section explicitly requires
@@ -74,4 +75,4 @@ concise `error:` line on stderr without a Python traceback.
 
 ## Limitations
 
-The linter validates runbook structure and risky wording. It cannot prove that the documented workflow is operationally complete.
+The linter validates built-in runbook structure, optional organization-specific required sections, and risky wording. It cannot prove that the documented workflow is operationally complete.

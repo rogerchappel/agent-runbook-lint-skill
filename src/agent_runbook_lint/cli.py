@@ -31,15 +31,26 @@ def build_parser() -> argparse.ArgumentParser:
     check = sub.add_parser("check", help="lint an agent runbook")
     check.add_argument("runbook", type=Path)
     check.add_argument("--report", type=Path)
+    check.add_argument("--policy", type=Path, help="JSON file containing additional required topics")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "check":
+        if args.policy is not None:
+            try:
+                from .linter import _load_policy
+                _load_policy(args.policy)
+            except (OSError, UnicodeError, ValueError) as error:
+                print(f"error: invalid policy: {error}", file=sys.stderr)
+                return 2
         try:
-            report = lint_runbook(args.runbook)
+            report = lint_runbook(args.runbook, args.policy)
         except (OSError, UnicodeError) as error:
+            _print_io_error("read runbook", args.runbook, error)
+            return 2
+        except ValueError as error:
             _print_io_error("read runbook", args.runbook, error)
             return 2
         output = report.to_markdown()
