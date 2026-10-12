@@ -100,3 +100,15 @@ def test_report_write_errors_are_concise(
     assert captured.out == ""
     assert captured.err == f"error: cannot write report '{destination}': {diagnostic}\n"
     assert "Traceback" not in captured.err
+
+
+def test_invalid_custom_policy_reports_validation_error(tmp_path, capsys):
+    source = tmp_path / "runbook.md"
+    source.write_text(Path("fixtures/good-runbook.md").read_text(encoding="utf-8"), encoding="utf-8")
+    policy = tmp_path / "policy.json"
+    policy.write_text('{"required_topics": {"Escalation": []}}')
+    result = main(["check", str(source), "--policy", str(policy)])
+    captured = capsys.readouterr()
+    assert result == 2
+    assert "policy topic 'Escalation' must have a non-empty string alias list" in captured.err
+    assert "Traceback" not in captured.err

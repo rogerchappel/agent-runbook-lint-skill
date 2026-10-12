@@ -105,11 +105,14 @@ def _markdown_code_span(value: str) -> str:
     return f"{delimiter}{padding}{value}{padding}{delimiter}"
 
 
-def lint_runbook(path: Path) -> RunbookReport:
+def lint_runbook(path: Path, policy_path: Path | None = None) -> RunbookReport:
     text = path.read_text(encoding="utf-8")
     sections = _parse_sections(text)
     results: list[LintResult] = []
-    for topic, needles in REQUIRED_TOPICS.items():
+    required_topics = dict(REQUIRED_TOPICS)
+    if policy_path is not None:
+        required_topics.update(_load_policy(policy_path))
+    for topic, needles in required_topics.items():
         found = any(
             _section_has_content(section.body) and _heading_matches(section.heading, needles)
             for section in sections
@@ -120,6 +123,32 @@ def lint_runbook(path: Path) -> RunbookReport:
     results.append(_check_command_blocks(text))
     results.append(_check_numbered_steps(text))
     return RunbookReport(path=path, results=tuple(results))
+
+
+def _load_policy(path: Path) -> dict[str, tuple[str, ...]]:
+    import json
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError) as error:
+        raise ValueError(f"cannot read policy '{path}': {error}") from error
+    if not isinstance(data, dict) or set(data) != {"required_topics"}:
+        raise ValueError("policy must be an object containing only 'required_topics'")
+    topics = data["required_topics"]
+    if not isinstance(topics, dict):
+        raise ValueError("policy 'required_topics' must be an object")
+    result: dict[str, tuple[str, ...]] = {}
+    for name, aliases in topics.items():
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("policy topic names must be non-empty strings")
+        if name in REQUIRED_TOPICS:
+            raise ValueError(f"policy topic '{name}' duplicates a built-in topic")
+        if not isinstance(aliases, list) or not aliases or any(
+            not isinstance(alias, str) or not alias.strip() for alias in aliases
+        ):
+            raise ValueError(f"policy topic '{name}' must have a non-empty string alias list")
+        result[name] = tuple(aliases)
+    return result
 
 
 def _parse_sections(text: str) -> tuple[MarkdownSection, ...]:
