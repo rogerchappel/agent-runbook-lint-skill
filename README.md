@@ -4,6 +4,17 @@ Lint agent runbooks before automation follows them. `agent-runbook-lint` checks 
 
 ## Quickstart
 
+To run the same validation scope used by CI (clean temporary environment,
+tests, compile check, smoke check, and Quickstart check), run:
+
+```bash
+bash scripts/validate.sh
+```
+
+This installs the project and development dependencies into a temporary
+virtual environment; Python 3.10 or newer and Node.js/npm are required. CI runs
+this command across Python 3.10–3.14.
+
 Python 3.10 or newer is required. This setup selects an installed supported
 interpreter, verifies its version, and keeps the editable install isolated:
 
