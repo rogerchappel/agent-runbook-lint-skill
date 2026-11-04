@@ -50,6 +50,7 @@ After the Quickstart, these commands all pass against `./.venv`:
 | `npm test` | pytest suite (`.venv` interpreter) |
 | `npm run check` | byte-compile `src` and `tests` |
 | `npm run smoke` | lint `fixtures/good-runbook.md` to a report |
+| `npm run release:check` | run the compile check, test suite, and smoke check (no publishing) |
 
 The npm scripts resolve the interpreter via `scripts/python-for-npm.sh`,
 which prefers `.venv/bin/python` (or `.venv/Scripts/python.exe`) and falls
