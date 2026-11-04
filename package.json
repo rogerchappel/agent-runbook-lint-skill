@@ -6,7 +6,8 @@
   "scripts": {
     "test": "\"$(bash scripts/python-for-npm.sh)\" -m pytest",
     "check": "\"$(bash scripts/python-for-npm.sh)\" -m compileall src tests",
-    "smoke": "\"$(bash scripts/python-for-npm.sh)\" -m agent_runbook_lint check fixtures/good-runbook.md --report /tmp/agent-runbook-lint-report.md"
+    "smoke": "\"$(bash scripts/python-for-npm.sh)\" -m agent_runbook_lint check fixtures/good-runbook.md --report /tmp/agent-runbook-lint-report.md",
+    "release:check": "npm run check && npm test && npm run smoke"
   }
 }
 
