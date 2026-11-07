@@ -48,7 +48,7 @@ After the Quickstart, these commands all pass against `./.venv`:
 | Command | Runs |
 | --- | --- |
 | `npm test` | pytest suite (`.venv` interpreter) |
-| `npm run check` | byte-compile `src` and `tests` |
+| `npm run check` | parse Python syntax in `src` and `tests` without writing bytecode |
 | `npm run smoke` | lint `fixtures/good-runbook.md` to a report |
 | `npm run release:check` | run the compile check, test suite, and smoke check (no publishing) |
 
