@@ -12,11 +12,19 @@ bash scripts/validate.sh
 ```
 
 This installs the project and development dependencies into a temporary
-virtual environment; Python 3.10 or newer and Node.js/npm are required. CI runs
-this command across Python 3.10–3.14.
+virtual environment; Python 3.10 or newer and Node.js/npm are required. The
+install uses pip to fetch project build requirements and development
+dependencies, so package-index access (or a pre-populated pip cache/source)
+is required. The command has no offline/cache-only switch; in an offline
+environment, confirm the required packages are already available to pip before
+running it. CI runs this command across Python 3.10–3.14.
 
 Python 3.10 or newer is required. This setup selects an installed supported
-interpreter, verifies its version, and keeps the editable install isolated:
+interpreter, verifies its version, and keeps the editable install isolated.
+Like the validation command above, `pip install -e ".[dev]"` needs package-index
+access or all build and development dependencies available through configured
+pip sources/cache; there is no dedicated offline mode. Check that availability
+before starting if you cannot reach a package index:
 
 ```bash
 PYTHON_BIN="$(
