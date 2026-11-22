@@ -5,5 +5,5 @@
 - [x] Add CLI and report generation.
 - [x] Add fixtures and tests.
 - [x] Document agent skill usage and orchestration.
-- [ ] Add optional custom policy configuration.
+- [x] Document optional custom policy configuration.
 
