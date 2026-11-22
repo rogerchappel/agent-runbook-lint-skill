@@ -1,10 +1,19 @@
 # Custom lint policies
 
-Use `--policy PATH` to add organization-specific required Markdown sections. The
-policy is UTF-8 JSON with one `required_topics` object; each key is the check
-name and each value is a non-empty list of heading words/phrases that match
-that section (case-insensitively). The built-in checks and risky-action rules
-remain enabled whether or not a policy is supplied.
+Use an optional UTF-8 JSON policy to add organization-specific required
+Markdown sections. Custom topics supplement the built-in checks; they do not
+replace the built-in topics or risky-action approval checks.
+
+## Schema
+
+The top-level object contains exactly one property, `required_topics`. Its
+value is an object mapping each custom check name to a non-empty array of
+non-empty strings. Each string is a heading alias matched case-insensitively
+against Markdown headings using whole-word matching. Names must be non-empty
+and must not duplicate a built-in topic name. For each configured topic, a
+matching heading must have non-blank prose outside fenced code blocks.
+
+Example `.runbook-policy.json`:
 
 ```json
 {
@@ -15,13 +24,16 @@ remain enabled whether or not a policy is supplied.
 }
 ```
 
+## CLI
+
+Pass the policy to the `check` command with `--policy`; use `--report` as
+usual to write the Markdown report:
+
 ```bash
 agent-runbook-lint check runbook.md --policy .runbook-policy.json --report report.md
 ```
 
-A configured topic must have a non-empty name and at least one non-empty string
-alias. The policy object may contain only `required_topics`; that value must be
-an object, and custom names may not duplicate built-in topics. Invalid JSON,
-invalid shapes, duplicate names, and unreadable policy files fail with exit code
-2 and an `error:` diagnostic. A policy is optional; omitting `--policy` keeps
-the existing fixed checks unchanged.
+Without `--policy`, the fixed built-in checks run as before. Invalid JSON,
+unsupported properties, malformed topic mappings, duplicate built-in names,
+and unreadable policy files produce an `error:` diagnostic and exit code 2.
+The CLI validates the policy before linting the runbook.

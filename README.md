@@ -69,7 +69,8 @@ modifying a Quickstart `.venv`.
 
 See [Built-In Rules](docs/RULES.md) for the exact deterministic matching
 semantics. Organization-specific required sections can be added with the
-optional [`--policy` JSON file](docs/policy.md); built-in checks remain active.
+optional [`--policy` JSON file](docs/policy.md), which describes its schema,
+validation, and CLI usage; built-in checks remain active.
 
 Release operations such as `tag the release` and `create a release tag` are
 risky actions. They pass only when the approval section explicitly requires
